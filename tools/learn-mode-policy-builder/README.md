@@ -5,19 +5,19 @@
 To collect logs that can be processed by the Learn Mode tool, enable the Learn Mode toggle on the CipherTrust Manager GUI while creating a policy. After you have logs for the Learn Mode, you can proceed as follows:
 
 1. Clone the CipherTrust Transparent Encryption Git repository.
-    
+
         git clone https://github.com/thalescpl-io/CipherTrust_Transparent_Encryption.git
 
 2. Navigate to the `learn-mode-policy-builder` directory.
-    
+
         cd CipherTrust_Transparent_Encryption/tools/learn-mode-policy-builder
 
 3. View the common commands.
 
         ./lmpb -h
-    
+
     **Sample Output**
-    
+
         usage: lmpb [-h] [--logdir LOGDIR] {log,policy} ...
 
         positional arguments:
@@ -26,8 +26,9 @@ To collect logs that can be processed by the Learn Mode tool, enable the Learn M
             policy         learn mode policy updates
 
         options:
-          -h, --help       show this help message and exit
-          --logdir LOGDIR  log directory, defaults to /var/log/vormetric
+          -h, --help           show this help message and exit
+          --agent_os AGENT_OS  operating system where CTE is installed(one of `linux` or `windows`), defaults to `linux`
+          --logdir   LOGDIR    log directory, defaults to /var/log/vormetric
 
 ## Log Related Commands
 
@@ -140,7 +141,7 @@ After the logs are processed by the Learn Mode policy builder tools, following p
             [ /sdb/anom/vtebuild/_obj_pem_64_perf_vor_ulinux_ubuntu20/mk/generate_messages_h.pl
             /usr/bin/dh_installdeb /usr/bin/dh_testroot /usr/lib/rpm/check-files /usr/lib/gcc/x86_64-linux-gnu/9/collect2 /usr/bin/ar /sdb/anom/vtebuild/_obj_fspem_64_perf_vor_klinux_5.4.0-48-generic/build/env/linux/5.4.0-48-generic/build/scripts/mod/modpost /usr/bin/make /bin/gzip /usr/bin/fakeroot
             ...
-            
+
           audit-group-pset-1
             [ /bin/mount /bin/df /bin/chmod /usr/bin/make /bin/bash /bin/sh /usr/bin/fakeroot /usr/bin/updatedb.mlocate /bin/ls ]
 
