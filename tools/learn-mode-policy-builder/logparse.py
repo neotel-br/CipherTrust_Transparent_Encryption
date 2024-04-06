@@ -104,7 +104,7 @@ logline_regex_windows = re.compile(
     Policy\[(?P<POLICY>[\w-]+)\]        # Policy [policy-learnmode]
     \s+
     User\[(?P<USER>                     # User [...
-      (?P<UNAME>[^\]]+),                  # user name
+      (?P<UNAME>[^\]]+)                 # user name
     )\]                                 # User ...]
     \s+
     Process\[(?P<PROCESS>[^\]]+)\]      # Process [/usr/bin/updatedb.mlocate]
@@ -121,18 +121,17 @@ logline_regex_windows = re.compile(
 )
 
 
-def parse_log_line(log_line: str, logmodel: LogModel, agent_os: str):
-    logline_regex = (
-        logline_regex_linux if agent_os.lower() == "linux" else logline_regex_windows
-    )
+def parse_log_line(log_line: str, logmodel: LogModel, logline_regex, agent_os):
     match = logline_regex.match(log_line)
     if match is None:
+        print("No match for log!")
         return False
 
     policy = match.group("POLICY")
 
     user = {}
     user["name"] = match.group("UNAME")
+    parentinfo = list()
     if agent_os.lower() == "linux":
         user["uid"] = match.group("UID")
         if match.group("NOAUTH"):
@@ -155,7 +154,6 @@ def parse_log_line(log_line: str, logmodel: LogModel, agent_os: str):
                 user["euid"] = user["uid"]
                 user["gid"] = match.group("A_GID")
 
-        parentinfo = list()
         for idx in range(5):
             sidx = str(idx)
             if match.group("PNAME" + sidx):
@@ -187,7 +185,9 @@ def parse_log_line(log_line: str, logmodel: LogModel, agent_os: str):
     return logmodel.update(policy, user, parentinfo, process, resource, action)
 
 
-def log_work(logfiles: [], logs_size, maxworksize=32 * 1024 * 1024):
+def log_work(
+    logfiles: [], logs_size, logline_regex, agent_os, maxworksize=32 * 1024 * 1024
+):
     """A generator that returns a block of text of max size maxworksize
 
     Keyword arguments:
@@ -206,10 +206,18 @@ def log_work(logfiles: [], logs_size, maxworksize=32 * 1024 * 1024):
                 logf.readline()
                 workend = logf.tell()
                 curr_size += logend - workstart
-                yield [log, workstart, workend - workstart, curr_size, logs_size]
+                yield [
+                    log,
+                    workstart,
+                    workend - workstart,
+                    curr_size,
+                    logs_size,
+                    logline_regex,
+                    agent_os,
+                ]
 
 
-def log_worker(loginfo: [], agent_os: str) -> []:
+def log_worker(loginfo: []) -> []:
     """The "worker" function that each child process runs.
     Goes line by line, parsing each and then updating an
     intermediate logmodel.
@@ -223,13 +231,13 @@ def log_worker(loginfo: [], agent_os: str) -> []:
     """
     skipped = []
     logmodel = LogModel()
-    logfile, wstart, wsize, curr_size, logs_size = loginfo
+    logfile, wstart, wsize, curr_size, logs_size, logline_regex, agent_os = loginfo
     with open(logfile, "r") as lf:
         lf.seek(wstart)
         sys.stdout.flush()
         lines = lf.read(wsize).splitlines()
         for line in lines:
-            if parse_log_line(line, logmodel, agent_os):
+            if parse_log_line(line, logmodel, logline_regex, agent_os):
                 pass
             else:
                 skipped.append(line)
@@ -247,15 +255,21 @@ def process_logs_mp(
     Keyword arguments:
     logfiles -- a list of the new logfiles that need to be processed
     logmodel -- the logmodel that needs to be updated
+    agent_os -- CTE agent operating system
 
     Returns:
     The updated logmodel
     """
+    logline_regex = (
+        logline_regex_linux if agent_os.lower() == "linux" else logline_regex_windows
+    )
     pool_size = mp.cpu_count() if mp.cpu_count() < 8 else 8
     ts = 0
     tm = 0
     workpool = mp.Pool(pool_size)
-    jobs = workpool.map_async(log_worker, log_work(logfiles, logs_size), agent_os)
+    jobs = workpool.map_async(
+        log_worker, log_work(logfiles, logs_size, logline_regex, agent_os)
+    )
     totaljobs = jobs._number_left
     rejfile = None
     rejfilename = f"/tmp/lmskip.{os.getpid()}"
