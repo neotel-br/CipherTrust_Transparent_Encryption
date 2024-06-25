@@ -23,7 +23,7 @@ logline_regex_linux = re.compile(
     \s+
     \[([\w\s]+)\]                       # [CGP2603I]
     \s+
-    \[(?P<TYPE>LEARN\sMODE|AUDIT)\]     # [LEARN MODE] support AUDIT and ALARM?
+    \[(?P<TYPE>LEARN\sMODE)\]     # [LEARN MODE] support AUDIT and ALARM?
     \s+
     Policy\[(?P<POLICY>[\w-]+)\]        # Policy [policy-learnmode]
     \s+
@@ -99,7 +99,7 @@ logline_regex_windows = re.compile(
     \s+
     \[([\w\s]+)\]                       # [CGP2603I]
     \s+
-    \[(?P<TYPE>LEARN\sMODE|AUDIT)\]     # [LEARN MODE] support AUDIT and ALARM?
+    \[(?P<TYPE>LEARN\sMODE)\]     # [LEARN MODE] support AUDIT and ALARM?
     \s+
     Policy\[(?P<POLICY>[\w-]+)\]        # Policy [policy-learnmode]
     \s+
