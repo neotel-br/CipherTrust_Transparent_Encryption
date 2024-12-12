@@ -272,7 +272,7 @@ def process_logs_mp(
     )
     totaljobs = jobs._number_left
     rejfile = None
-    rejfilename = f"/tmp/lmskip.{os.getpid()}"
+    rejfilename = f"{os.environ.get('TEMP')}\\{os.getpid()}" if os.name == "nt" else f"/tmp/lmskip.{os.getpid()}"
     workpool.close()
     while not jobs.ready():
         print(
@@ -299,7 +299,8 @@ def process_logs_mp(
                     "gid": uk.gid,
                 }
                 for psk, psv in uv.items():
-                    process = {"name": psk.name, "uid": psk.uid, "euid": psk.euid}
+                    process = {"name": psk.name,
+                               "uid": psk.uid, "euid": psk.euid}
                     for rk, rv in psv.items():
                         for a in rv.keys():
                             logmodel.update(
@@ -411,7 +412,8 @@ def get_newlogs(dirpath: str, log_filename: str):
     firstlog_offset = 0
     lm_exists, logmodel, lmfile_mtime = load_logmodel(dirpath)
     if lm_exists:
-        newlogfiles = [_ for _ in logfiles if os.path.getmtime(_) > lmfile_mtime]
+        newlogfiles = [
+            _ for _ in logfiles if os.path.getmtime(_) > lmfile_mtime]
         if len(newlogfiles) > 0:
             newlogfiles.sort(key=os.path.getmtime)
             for logno, logfile in enumerate(newlogfiles):
@@ -433,7 +435,8 @@ def get_newlogs(dirpath: str, log_filename: str):
 
 def log_status(dirpath: str, log_filename: str):
     """prints how many new logs there are to be processed"""
-    newlogfiles, logs_size, _, after_mtime, _ = get_newlogs(dirpath, log_filename)
+    newlogfiles, logs_size, _, after_mtime, _ = get_newlogs(
+        dirpath, log_filename)
     if newlogfiles is None:
         return
     if len(newlogfiles) > 0:
